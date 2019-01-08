@@ -1,0 +1,497 @@
+Report Project 3 - Chetrys - Marcel Burgunder - 204796886 - Spring 2018
+
+My project report is organised in the following way. 
+
+1. Brief description and introduction to my code strucure, with some design decisions and assumptions I have made, as well as a 
+note about bugs and implementation failures.
+2. All classes, with each of their public member functions & their private data members are listed but undescribed,
+in order Game, Well, and Piece; as well as any global constants/enumerations at the end.
+3. Highly detailed description for each function and class
+
+Whenever an asterixt (*) is seen in my report, it implies that the description/action refers to another function
+referenced somewhere else in the report (such as if it says: "...then it checks whether the row is full*...", then
+the asterix is saying that a different function is called to do this job).
+
+All listed functions are voids, unless specified in paranthese afterwards.
+
+
+////////////////////////////////////////////////////////////
+// Brief description and introduction to my code strucure //
+////////////////////////////////////////////////////////////
+
+A. In my code only 3 classes are used, game, well and piece, and no base classes or derivations are ever used.
+The reason why I didn't use a base class for any piece, is because it vastly complicated the process of calling
+private members of the base class within public member functions of specific classes, without having code 
+many redundancies. Every single piece object however does contain an int that gives the PieceType.
+
+B. One important thing that should be noted is that as a piece falls down the well, it is not part of the well,
+it is merely being printed on screen while recording it's row and column, whereby it repeatedly checks whether
+the corresponding space in the well is occupied. I figured that this design was very efficient, since with it, the
+well doesn't constantly have to be reupdated, and reprinted, and is also helps keep the falling pieces distinct from the well.
+The spec didn't specify whether this was allowed, and I figured it was the best way of doing it.
+
+C. All classes are tightly interlinked, each well has a pointer to the screen, and each piece has a pointer to
+the well. This helped me create a lot of shortcuts in terms of referencing objects to each other in the same game.
+
+D. I have simplified many functions, and broken them down into smaller functions, to make my code more readable, clear
+and logical.
+
+E. I have added screen coordinates to those already present in the game.cpp skeleton, as well as having added an enumeration
+for actions (such as down, rotate etc.) to provide a shortcut to call the right functions for the right moves.
+
+F. All pieces are initialised to have x and y coordinates at the top of the well where they should be dropped from, meaning that
+if a piece is called to print for the first time (as it is in the deal with piece function), it will print in the
+right place, at the top of the well. When it is printed for the first time, a true value is passed into the print function,
+that tells the print function that we are placing it at the top of the well, and thus makes the printing easier (will be clear
+later).
+
+G. There is an overlap function in the class Piece that checks whether the piece overlaps with a part of the well, before
+it moves in a certain direction; this also checks whether it overlaps when it is placed at the top of the well.
+
+H. The functions for moving to the side, rotating and moving down are all boolean functions. They first check whether the move
+can be performed, and if it cannot then it returns false before doing anything (unless the down function fails, the piece is added
+to the well (solidified*)). If it can be performed, it gets performed* and return true.
+
+I. The RJN function in Game converts an integer into a right-hand justified string of 7 spaces displaying the number.
+
+J. It was very important to have a pointer to a screen in the well (the screen of the game that contains the well), 
+since this allowed for a massive massive shortcut to be drawn, for many well related functions. I also used this pointer 
+a lot in the Piece class to call the games screen directly for printing purposes.
+
+K. I have decided to also include one private member of type piece for every piece type. Doing this has provided me with a good standard
+library of pieces that exist in the well object, that I can easily draw from, replicate and use. Initially I tried making piece a base class
+and having a derived class for every specific piece type. Later I decided to have a derived class for only the special piece types. Ultimately
+I concluded that hte design of only having one piece class (that is not a base class) is the most efficient way of writing code for different
+operations, as well as the fact that it avoids the most redundancies.
+
+L. For the Well object I have decided to make a private data member of a two dimensional character array representing the well.
+It was unspecified how I should represent the well, and I figured since it doesn't have to be resized, and has to be easily accessed,
+the best data strucutre was a two dimensional character array (I've also written a function wellspace to access the characters in this
+array).
+
+M. To make all functions in my game class very easy to understand, I've referenced them frequently to other functions.
+
+N. It is necessary to count the rows seperately before removing them; in the executable you gave us, rows were not removed if the level was won,
+thus it should be checked how many are gonna be removed, so we know whether we win the game before we actually remove the rows from the well. Here
+it is important to note that the maximum number of rows that can be removed is 5, nonetheless in my scoring function, I have added a case for
+if 6 rows are removed, where the player is awarded 2*(score for 5). This should never be called, but I added it to make the program more flexible;
+it's also not specified in the spec, that score is an assumption I made, based on the scoring pattern.
+
+O. The construction of pieces is where I had the most trouble. Every way that I thought of initialising them was either very redundant, or would
+involve a lot of code that would be necessary to access the piece data. Ultimately (after long debates), I've settled on establishing 4 different
+4x4 character arrays for each piece, each holding one of the pieces orientations. These orientations and arrays are only accessed and changed once,
+which is at the beginning when they are constructed, from that point on, they remain constant. Although this method seems inefficient, especially
+not using Piece as a base class, it has made the implementations of member functions vastly easier and more do-able.
+
+P. Orientations of pieces that are repeated, don't have to be initialied again in the constructor, since the type of the piece is stored in every
+piece object, any function (specifically rotation*) that calls a piece, will be aware of its no. of orientations. This is a shortcut, that avoids
+writing a lot of useless code.
+
+Q. I ran into some trouble with the printing of the pieces on the screen, so I decided to make two functions regarding the printing of the piece.
+The first one very plainly just prints the 4x4 piece grid somewhere on the screen, this one is used when we want to print to show the next piece
+in the queue. The other printing function (print after move), ensures that only hashtags are printed (thus the empty spaces won't be printed
+to overlap parts of the well), and that (unless it spawns at the top of the well) whatever was previously printed, is overprinted with space
+characters, so that after a piece moves, the hashtagprint doesn't stay in its previous location. I ran into a whole bunch of redundancies and
+difficulties, that made my code very hard to understand and read, when I tried incorporating both these functions into one function, thus I
+decided to make two seperate functions.
+
+R. One very crucial function to my code architecture, is the nooverlap function in the Piece Class; it basically ensures that an action is only
+performed properly by a piece, when the piece does not cause it to overlap with any part of the well, whereby I utilized the pointer to well, 
+to check for an overlap between any hashtags, and parts of the well.
+
+S. When a piece action returns false, it implies that the piece couldn't be moved, and wasn't; if it return true, then the piece was moved and was
+also printed successfully; I think this was an elegant way of installing a failsafe to prevent any actions
+
+T. When the Move Down function fails, that is when a solidify function is called to add the dollar signs to the well where the hash tag characters
+were when Move Down returned false, since a Move Down failing, implies that the Piece has reached the bottom of the well. Conveniently everytime
+Move Down fails, after solidification and other operations, the well is redisplayed, and thus immediately shows the dollar signs.
+
+U. The Move Down function generally should print after move* like all move functions, however I've enabled the ability to input a false value
+explicitly when calling the function, so that when we hit space and the instant down function repeatedly calls move down, it does not int a loop
+print it; this override enables the program to avoid unnecessary processing power.
+
+V. When a piece is moved, all that really happens is that its x/y coordinates change (i.e. it's m_row and m_col value) respectively for the given
+move, and the previous print of the piece is cleared, and it is then reprinted at hte new coordinates.
+
+W. There is a rare instance that I observed where if you have the Crazy Piece laid out like this in the well:
+
+	#  #	and you rotate it, due to the lay out, it ends	   #	which if it were an abstraction of real world mechanics would break the
+	 ##$	up successfully rotating into this position:      #$	laws of the universe, however since the spec didn't specify that we are
+	$$ $						    	$$#$	abstracting (to a degree) real world mechanics, I figured it is okay to
+	$$$							$$$#	have it rotate into place.
+
+X. As evident most previous points made, I have made many assumption regarding the order in which things happen (such as solidification
+followed by special action), where the spec didn't specify the order of actions. Many of these design decisions (in terms of ordering) were
+completely arbitrary, some were necessary for greater performance.
+
+Y. The spec didn't specify how the rows left, level or score should be displayed if it was equal to or larger than 10^8, since then it would be
+impossible to print a value in a space 7 spaces wide right hand justified if it takes up 8 or more spaces; thus I assumed that in this rare 
+instance it would be okay for my code to print the value past the 7 character space, since I couldn't think of a more reasonable way to print
+such high values.
+
+Z. I did not notice any bugs, and was able to implement all functions to work properly.
+
+
+////////////////////////////////////////////////////////////
+///////// All classes, functions and constants /////////////
+////////////////////////////////////////////////////////////
+
+Game Object - 	Public Functions			Private Members
+
+		Game Constructor			Well (Well)
+		Play					Screen (Well)
+		Play one level (boolean)		Level (integer)
+		Display Prompt				Score (integer)
+		Display Status				Rows Left (integer)
+		Update Score & Rows left		Timer (integer)
+		Update Level
+		Update Next piece
+		Deal with Piece (boolean)
+		Count_Score_Update 
+		rjn (string)
+
+Well Object - 	Public Functions			Private Members
+
+		Well Constructor			Well (two dimensional character array)
+		Display					Next (Queue of pieces)
+		Empty Well				Screen (pointer to screen)
+		Add					A piece of every type (10 total piece objects)
+		Queuefront (Piece)			
+		Screen (Pointer to Screen)		
+		Cycle Queue (boolean)
+		Count Removes (integer)
+		Remove Rows
+		Rowfull (boolean)
+		Rowempty (boolean) 
+		Shift all above (recursive)
+		Wellspace (character)
+
+Piece Object - 	Public Functions			Private Members
+
+		Piece Constructor			4x Piece (4x4 character arrays)
+		Special					Row (integer)
+		Print Piece				Col (integer)
+		Print after move			Orientation (integer)
+		Rotate (boolean)			Type (integer)
+		Move down (boolean)			Well (Pointer to Well)
+		Instant down
+		Move side
+		No overlap (boolean)
+		Solidify
+		Foamexpand (recursive)				
+		Row (integer)
+		Col (integer)
+		Well (pointer to Well)
+
+There is also a function that belongs to no class that returns a PieceType (enumeration) randomly called Choose Random Piece Type,
+but this is not implemented in the code I handed in (since the spec said it wasn't necessary).
+
+Global constants and enumerations used
+
+Enumeration for PieceType
+Screen coordinates for various features (that were included in skeleton)
+
+I added:
+
+Enumeration for Actions = { spawn, lefty, righty, down, rotation }
+Screen coordinates for numerical score (7 field wide right justified field), some place away (so the
+cursor isn't in the way), where piece starts off in well.
+Constant value for the well depth and width.
+
+////////////////////////////////////////////////////////////
+///////// Highly detailed description of each //////////////
+////////// function and class in the program ///////////////
+////////////////////////////////////////////////////////////
+
+
+///////// Game ////////////
+
+/// Game Constructor
+Initialises the timer to 1 second
+Level to 1
+Score to 0
+Constructs the Screen using the constant height and width given
+Constructs the Well passing in a reference to the Games screen (this links the well to the screen)
+
+
+/// Play (see M.)
+Displays the Well*, Status (score, rows left and level)* and Prompt (starting prompt)* on the screen 
+and then waits for the player to hit enter.
+Then in a loop:
+	The game plays one level*
+	If the player loses then the loop breaks, and the Gameover prompt displays*
+	If they win, then after they hit enter, the level is incremented, rows left set to (5*level), 
+	the Timer is adjusted according to spec (to increase gravity), and the well is emptied* and redisplayed*.
+
+
+/// Display Prompt
+Takes in a string, moves the cursor to prompt space and prints the string, overwriting what was printed before.
+
+
+/// Display Status
+Moves cursor to Score space and prints "Score:     "
+Moves cursor to Rows left space and prints "Rows left: "
+Moves cursor to Level space and prints "Level:     "
+
+
+/// Play one level
+Moves cursor to Next Piece space and prints "Next piece:"
+Updates the screen with new level* and score and rowsleft*
+
+Calls the deal with piece function* that takes in the Piece that's at the front of Wells queue of Pieces.
+	This is a recursive function, that keeps calling the next piece in the queue;
+	It will return false if a Piece causes the player to loose, and true if it causes a player to win the game
+	Thus it decides whether the level is won or not
+
+
+/// Deals with Piece
+This recursive function takes in a piece
+It cycles one piece through the queue* and updates the display on what the next piece is*
+Prints the piece for the first time* at the top of well (see introduction F.)
+If it overlaps with the well*
+	return false causing the level to be lost
+
+Else continue
+
+	Run an infinite loop where at the start of the loop a timer starts. 
+
+		Then run another loop for as long as the
+		timer has not reached game's timer value.
+
+		In this loop, commands on the piece can be called in a switch statements, that takes in a called character
+		(using a userinterface function)
+
+		For any command entered (such as left, right), the switch statement calls the Pieces respective move/action function
+		to do it's job on the piece*
+
+		If the down function* is called, the timer is restarted
+
+		If the timer runs out, then down function* is immediately called
+		
+		(see H. for boolean logic with these commands)
+
+		If the down function fails*, then the following things are called in order:
+			Special action done by piece*
+			Rows to be removed counted, Score/Updated and printed in the right place* (see N.)
+			Well is redisplayed*
+			Then if no rows are left, then we return true, telling the play one level function that we've won the level
+			If there are, we remove the rows and redisplay the well and recursively call the same function on the next piece
+			in the queue
+
+
+/// Count_Score_Update
+Calls a function in the well to count the rows to remove (inputting the piece for which movedown failed)
+Using a switch statement the score is appropriately changed according to the spec (see N.)
+Score and Rows left updated on screen*
+
+
+/// Update Score /// Update Rows and Level
+
+Simply moves cursor to where the 7 space field starts
+Then prints the string that the RJN function return for the score/level/rows (see I.)
+
+
+/// Next piece update
+
+Moves cursor to where the next piece should be displayed
+Calls the printpiece function for that piece and screen*
+
+
+/// RJN
+
+This function takes in an integer and will convert it to a string, 7 spaces wide, right hand justified.
+
+In a loop it takes the modulus of the int (which is going to be the last digit), pushes it as a character (converts it using an char array),
+into the stack and then divides the integer by 10, (equivalent to subtracting the modulus and dividing by 10) and does the same again 
+until the integer = 0; This ultimately prompts a stack containing the int in characters; then fills the stack with space bars if it is less
+8 spaces long...
+
+Then the stacktop is repeatedly concatenated onto a temporary string and popped, and then that string is returned.
+(also see Y.)
+
+
+///////// Well ////////////
+
+/// Well constructor
+The constructor takes in a reference to a screen, to initialise it's pointer to the screen m_screen (see J.)
+It also initialises arbitrary piece objects, one of each type (see K.)
+The Well array is initialised to an empty Well* (see L.)
+The Piece queue is filled with 5 random pieces (in a for loop calling the chooseRandomPieceFunction). 
+	This queue will always contain new random pieces to be popped and used by other functions.
+
+	I chose to make the queue contain 5 pieces because I didn't want the queue to be too small and run out,
+	in case cycling the queue ever failed, or something didn't work 1/100 times. This of
+	course couldn't happen, but I just wanted to be safe, 5 is an arbitrary small number larger than 3.
+
+
+/// Empty Well
+This function simply runs 3 loops.
+	One to fill the open Well with space character (empty spaces)
+	One to fill the floor of the well with '@' characters
+	One to fill the sides of the well with '@' characters
+
+
+/// Screen and Queuefront
+Simply returns the screen pointer and the Piece at the front of the queue for other non-member functions to use
+
+
+/// Cyclequeue
+If the queue is empty, don't do anything (avoid a crash)
+Dequeues and item from the queue and then using the chooseRandomPieceType function, enqueues a random Piece into the queue
+	This is done using a switch statement on the return value of chooseRandomPieceType
+
+
+/// Remove Rows
+Cycles through all rows of the bounding box location to check if any are full (including the row above the bounding box, in case of upward
+foam expansion (there is also a failsafe to ensure that the row above 0 doesn't get called), and if they are, the function calls shiftallabove,
+which erases the row and shifts all rows above it down. If the bottom of the well is reached at any point (since we're examining the rows in
+a loop from top to bottom, the function returns.
+
+
+/// Add
+This function takes in the x and y coordinate and a character parameter
+The two dimensional well array is then accessed, and the character at the given coordinates is changed to the inputted parameter
+
+
+/// Display
+This function simply displays the well with its upperlefthand corner being printed at the coordinates x and y (which are inputted into the 
+function), on the screen that the well is linked to.
+
+
+// Well Space
+Simply return the character in m_well at the coordinates x and y (which are inputted into the function); this is frequently used to check whether
+there is and overlap and where the piece should stop moving (since pieces aren't placed in the well initially (see B.)
+
+
+/// Rowfull
+return whether or not row is full
+	Basically cycles in a loop through each character of the row number that was inputted into the function, and if a single character is 
+	the space, it return false, else if the loop runs to the end of the row, it return true;
+
+
+/// Rowempty
+Basically the same algorhythm as rowfull
+	except that it return false if it finds a character that is neither a space nor an '@'.
+
+
+/// Shift all above
+This is a recursive function
+	As long as the row number above the one inputted is not empty, in a loop it makes every character of the inputted row number (through the
+	add function*) = the character of the same column but row above it.
+	If the row above the inputted row number is empty, it simply clears that row, using a loop and the add* function with space character, and
+	then returns
+
+
+/// Count Remove
+Basically takes in a row coordinate (typically showing where the solidified* Piece was placed) and in a loop counts how many of the rows that the
+piece existed in filled a row (it also checks the row above the bounding box, in case of upward foam expansion (there is also a failsafe to ensure 
+that the row above 0 doesn't get called)); then it return the number of filled rows, to let the caller know, how many rows are about to be removed.
+
+///////// Piece ////////////
+
+/// Piece Constructor
+First see O.!!
+The Piece constructor takes in a parameter m_type that it stores as an integer
+	--> depending on the type that's inputted into the constructor, the various piece orientations are initialised in the appropriate
+	shapes. Some shapes that either don't rotate or have repeated orientations, won't have all 4 piece orientations intialised (see P.)
+The orientation is initialised to 0, and the starting coordinates of the piece are initialised to (3, 0), so that when it is printed for the
+first time, it ends up at the top of the well.
+A well is also inputted into the constructor, to link the well pointer in the piece to the appropriate well (will only every be the well that
+constructed the piece in the first place)
+
+
+/// Special
+Uses a switch statement to determine which special function should be called (switch statement with m_type)
+For Vapor Bomb : Runs a quick loop that add space characters to the well where it's supposed to (breaks if it tries adding to elements outside array
+For Foam : Calls a recursive function foamexpand, inputting as the both starting coordinates and current coordinates where the piece has come
+rest*
+
+
+/// Print Piece
+Uses a switch statement for the specific orientation of the piece
+	Then in a 4x4 for loop prints out the 4 space grid in which the piece is contained, at the coordinates inputted
+
+
+/// Print after move (see Q.)
+This function has a boolean input (if there is no input, then it assumes it is false)
+Basically this function is similar to the Print Piece function, except that it makes sure, that the space around it is cleared first (by
+printing space characters), and that the instead of printing the entire 4x4 grid in which the piece(with specific orientation) is inscribed,
+it prints only the '#' within the 4x4 grid. These operations are done using 4x4 for loops and switch statement for different orientations.
+In the case where the inputted boolean is true, then we don't clear the 4x4 space before we print the piece over it (this avoids some issues when
+the piece is printed for the first time at the top of the well.
+
+
+/// Rotate
+First it checks the type, and if the type is one that doesn't rotate or has one orientation, it immediately return true
+Then it checks whether there is an overlap*, returns false if there is.
+Then if the type has only two orientations, it switches m_or to 1 or m_or to 0 respecitvely, prints after move* and returns true
+Else it just increments the m_or and if it reaches 4, it makes it equal 0 (so that the orientation cycles back to the initial one), and then
+prints after move* and returns true;	(see S.)
+
+
+/// Move side
+If the piece type is the crazy piece, then it switches the input command to its opposite at the beginning.
+Takes in a direction parameter (lefty or righty), and then respectively checks whether there is an overlap for that action.
+If there is, it returns false,
+If there isn't, it moves the piece, prints after move* and returns true (for each respective direction) (see V.).
+
+
+/// Move down
+
+Takes in a boolean, that if it isn't inputted, is as a standard always true, which if true will print after move* (see U.), otherwise
+won't print after move* 
+Check for overlap
+	If there is no overlap, it moves (see V.) and (depending on input) prints after move*
+	If there is an overlap, it calls the solidify function* to add it to the well and return false.
+
+
+/// Instant down
+
+When instant down is called (i.e. space bar), then using a loop and the User Interface, it checks where the piece was previously, and then prints
+spaces everywhere where it was (in its 4x4 grid) unless there is a part of the well there (wouldn't want to print over our precious well)
+
+Then it repeatedly calls Move Down and inputs false (see U.) until Move Down failse (at which point Move Down adds that tile to the well).
+
+/// No Overlap
+
+This function takes in an integer corresponding to the action done (either moving left, right, down, or rotating or spawning at the top of well)
+
+First it creates local variables, that are equal to the row, column and orientation (this way we can apply operations to the values
+without it changing the objects coordinates)
+
+Using a switch statement on the action, it changes the values of the local variables of row, column and orientation appropriately
+
+Then using a switch statement for the local orientation, it runs for every case a loop for orientation ##
+	This loop performs a maximum of 4x4 = 16 operations, whereby four variables are created: two for 
+	the coordinates in the well where the piece is located, and two for the array position of the 4x4 
+	grid that the piece (of orientation ##) is inscribed in.
+		If at any point, the grid position returns a hashtag, and the corresponding space in the well (which is extracted
+		using the Well Space function, returns something that is not an empty space; the function return false, to let the
+		caller know that there is an overlap if the command is to be followed
+		Else if the loop runs out, the functions breaks and returns true
+
+/// Solidifiy
+
+Essentially this function will be called when we need to add the piece to the well; in which case what happens is a switch statement is
+called for the orientation
+	For any given orientation ##, a loop will be run through the 4x4 grid of piece (with orientation #), if any of those characters is
+	a '#', then wells add function is called, to add a '$' to the corresponding location in the two dimensional well array.
+	When the loop runs out, we break, and we're done.
+
+/// Foam Expand
+
+This is a recursive function for the expansion of the foam when it fails to move down further.
+It takes in 4 parameters, the two starting coordinates, and the two current coordinates (these are the same if we call the function for
+the first time).
+First thing that happens is that at the current coordinate a '*' character is added to the well
+Then it checks whether any of the spaces around it are both empty (space character) and in a 2 field range of the starting coordinates
+If they are at any point, it recursively calls itself again, taking in the same starting coordinates, but inputs different coordinates
+	4 different cases of which coordinates to input, x is incremented, y is incremented, x is decremented, y is decremented.
+
+
+/// Row, Col, Well
+
+Basically just returns the private data member values, so that other classes can use them (constant);
+
+
+///////////// END_OF_REPORT //////////////////////
